@@ -27,10 +27,11 @@ Manager using the browser
 Browser features
   ├─ React interface and transcript state
   ├─ Browser text-to-speech for Rohit
-  └─ Browser speech recognition for the manager (future)
+  └─ Browser speech recognition for the manager
 
-Local server (future)
-  └─ Keeps the AI API key private and asks an AI model for adaptive replies
+Local server
+  ├─ Keeps the AI key private
+  └─ Creates adaptive replies, or local practice replies without a key
 ```
 
 For now, the browser uses fixed sample replies. That lets us learn the user experience before we add a microphone or AI model.
@@ -151,25 +152,46 @@ For now, the browser uses fixed sample replies. That lets us learn the user expe
 
 **Commit:** `90d0fdf feat: support voice interruption`
 
+### 8. Local server and adaptive employee replies
+
+**Summary:** The browser can now ask a local server for Rohit's next reply after the manager finishes speaking.
+
+**What changed:**
+
+- Added a small Node server with one route: `POST /api/rehearse/reply`.
+- Kept the Gemini API key on the server, never in browser code.
+- Added a provider module that uses Gemini when `GEMINI_API_KEY` exists.
+- Added a free, deterministic local practice provider when there is no API key.
+- Added visible reply states: preparing, ready, and error.
+
+**What to learn:** The browser manages the experience; the server manages secrets and calls outside services. The provider module gives us one place to change the AI model later without rewriting the screen or API route.
+
+**Commit:** `ebb406b feat: add local rehearsal reply server`
+
+### Trying adaptive replies
+
+Run `pnpm dev`. This starts both the browser app and the local server.
+
+It works immediately with the local practice provider. To use Gemini later, copy `.env.example` to `.env`, add `GEMINI_API_KEY`, and restart `pnpm dev`. The `.env` file is ignored by Git, so the key is not committed.
+
 ## Next step
 
-Add a local Node server and an AI provider for adaptive employee replies.
+Build the Debrief screen from a completed transcript.
 
 The planned behaviour is:
 
 ```text
-Manager finishes a transcript turn
-  → browser sends the scenario and transcript to a local server
-  → server asks an AI model for Rohit's next short reply
-  → browser adds the reply to the transcript and can play it aloud
+Manager ends the rehearsal
+  → browser sends the transcript to the local server
+  → server returns structured coaching
+  → browser shows what worked, what to improve, and a revised opening
 ```
 
-We will keep the AI provider behind one small server module. That keeps the API key out of the browser and makes a future model change contained.
+The debrief will be practical rather than a score. It will include a clear readiness call, a worked moment, an improvement moment, a revised opening, and likely pushbacks.
 
 ## Future steps
 
-1. Add a structured Debrief screen based on the completed transcript.
-2. Test difficult cases and document the app's limits and tradeoffs.
+1. Test difficult cases and document the app's limits and tradeoffs.
 
 ## How to read this guide
 
