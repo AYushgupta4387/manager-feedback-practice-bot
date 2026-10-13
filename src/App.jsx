@@ -1,8 +1,44 @@
+import { useState } from "react";
 import { employeeContext } from "./data/employeeRecord.js";
+import { sampleTranscript } from "./data/sampleTranscript.js";
 
-const steps = ["Context", "Prepare", "Rehearse", "Debrief"];
+const steps = [
+  { id: "context", label: "Context", enabled: true },
+  { id: "prepare", label: "Prepare", enabled: false },
+  { id: "rehearse", label: "Rehearse", enabled: true },
+  { id: "debrief", label: "Debrief", enabled: false },
+];
 
 function App() {
+  const [activeMode, setActiveMode] = useState("context");
+  const [transcript, setTranscript] = useState([]);
+  const [nextTurnIndex, setNextTurnIndex] = useState(0);
+
+  const openRehearsal = () => {
+    if (transcript.length === 0) {
+      setTranscript(sampleTranscript.slice(0, 2));
+      setNextTurnIndex(2);
+    }
+
+    setActiveMode("rehearse");
+  };
+
+  const addSampleTurn = () => {
+    const nextTurn = sampleTranscript[nextTurnIndex];
+
+    if (!nextTurn) return;
+
+    setTranscript((currentTranscript) => [...currentTranscript, nextTurn]);
+    setNextTurnIndex((currentIndex) => currentIndex + 1);
+  };
+
+  const resetTranscript = () => {
+    setTranscript([]);
+    setNextTurnIndex(0);
+  };
+
+  const canAddSampleTurn = nextTurnIndex < sampleTranscript.length;
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -18,16 +54,39 @@ function App() {
 
       <nav aria-label="Practice stages" className="stage-nav">
         {steps.map((step, index) => (
-          <div
-            className={`stage ${index === 0 ? "stage--active" : ""}`}
-            key={step}
+          <button
+            className={`stage ${activeMode === step.id ? "stage--active" : ""}`}
+            disabled={!step.enabled}
+            key={step.id}
+            onClick={() =>
+              step.id === "rehearse" ? openRehearsal() : setActiveMode(step.id)
+            }
+            type="button"
           >
             <span className="stage-number">{index + 1}</span>
-            <span>{step}</span>
-          </div>
+            <span>{step.label}</span>
+          </button>
         ))}
       </nav>
 
+      {activeMode === "context" ? (
+        <ContextScreen onOpenRehearsal={openRehearsal} />
+      ) : (
+        <RehearsalScreen
+          canAddSampleTurn={canAddSampleTurn}
+          onAddSampleTurn={addSampleTurn}
+          onBackToContext={() => setActiveMode("context")}
+          onResetTranscript={resetTranscript}
+          transcript={transcript}
+        />
+      )}
+    </main>
+  );
+}
+
+function ContextScreen({ onOpenRehearsal }) {
+  return (
+    <>
       <section className="context-layout" aria-labelledby="context-title">
         <div className="context-intro">
           <p className="eyebrow">Step 1 of 4</p>
@@ -39,26 +98,17 @@ function App() {
           </p>
 
           <article className="employee-card">
-            <div className="avatar" aria-hidden="true">
-              R
-            </div>
+            <div className="avatar" aria-hidden="true">R</div>
             <div>
               <p className="card-label">Employee in this simulation</p>
               <h3>{employeeContext.name}</h3>
-              <p>
-                {employeeContext.role} · {employeeContext.team}
-              </p>
+              <p>{employeeContext.role} · {employeeContext.team}</p>
             </div>
           </article>
         </div>
 
-        <aside
-          className="record-notice record-notice--mock"
-          aria-labelledby="record-title"
-        >
-          <p className="notice-icon" aria-hidden="true">
-            ✓
-          </p>
+        <aside className="record-notice record-notice--mock" aria-labelledby="record-title">
+          <p className="notice-icon" aria-hidden="true">✓</p>
           <div>
             <h3 id="record-title">Synthetic practice record</h3>
             <p>
@@ -96,23 +146,90 @@ function App() {
       <section className="next-step" aria-labelledby="next-step-title">
         <div>
           <p className="eyebrow">Next learning slice</p>
-          <h2 id="next-step-title">
-            Build the transcript state before adding voice.
-          </h2>
+          <h2 id="next-step-title">Explore the transcript state.</h2>
           <p>
-            We will next add a visible conversation transcript with sample
-            turns. Voice and AI come after the core conversation flow is easy to
-            see and test.
+            This text-only rehearsal uses fixed sample turns. Later, speech
+            recognition will create manager turns and AI will create Rohit's
+            replies using this same transcript structure.
           </p>
         </div>
-        <button type="button" disabled aria-describedby="prepare-next">
-          Continue to Prepare
-        </button>
-        <p id="prepare-next" className="visually-hidden">
-          Continuing is disabled because Prepare mode is the next learning slice.
-        </p>
+        <button onClick={onOpenRehearsal} type="button">Open transcript demo</button>
       </section>
-    </main>
+    </>
+  );
+}
+
+function RehearsalScreen({
+  canAddSampleTurn,
+  onAddSampleTurn,
+  onBackToContext,
+  onResetTranscript,
+  transcript,
+}) {
+  return (
+    <section className="rehearsal-screen" aria-labelledby="rehearsal-title">
+      <div className="rehearsal-heading">
+        <div>
+          <p className="eyebrow">Text-only rehearsal prototype</p>
+          <h2 id="rehearsal-title">Practise with {employeeContext.name}.</h2>
+          <p>
+            These are fixed sample turns. They let us prove the conversation
+            state before microphone input, audio playback, or AI is involved.
+          </p>
+        </div>
+        <button className="button--secondary" onClick={onBackToContext} type="button">
+          Back to context
+        </button>
+      </div>
+
+      <section className="transcript-panel" aria-labelledby="transcript-title">
+        <header className="transcript-header">
+          <div>
+            <p className="eyebrow">Conversation</p>
+            <h3 id="transcript-title">Visible transcript</h3>
+          </div>
+          <span className="turn-count" aria-live="polite">
+            {transcript.length} {transcript.length === 1 ? "turn" : "turns"}
+          </span>
+        </header>
+
+        {transcript.length === 0 ? (
+          <div className="transcript-empty">
+            <p>No turns yet. Open the transcript demo again to add the opening turns.</p>
+          </div>
+        ) : (
+          <ol className="transcript-list">
+            {transcript.map((turn) => (
+              <li className={`transcript-turn transcript-turn--${turn.speaker}`} key={turn.id}>
+                <div className="turn-meta">
+                  <strong>{turn.speakerLabel}</strong>
+                  <time>{turn.time}</time>
+                </div>
+                <p>{turn.text}</p>
+              </li>
+            ))}
+          </ol>
+        )}
+
+        <footer className="transcript-actions">
+          <button disabled={!canAddSampleTurn} onClick={onAddSampleTurn} type="button">
+            {canAddSampleTurn ? "Add next sample turn" : "All sample turns shown"}
+          </button>
+          <button className="button--secondary" onClick={onResetTranscript} type="button">
+            Reset transcript
+          </button>
+        </footer>
+      </section>
+
+      <aside className="learning-note" aria-label="Why this comes before voice">
+        <p className="notice-icon" aria-hidden="true">i</p>
+        <p>
+          <strong>Why build this first?</strong> Voice and AI will both add
+          turns to this list. Getting the transcript model right first keeps
+          those later features small and testable.
+        </p>
+      </aside>
+    </section>
   );
 }
 
