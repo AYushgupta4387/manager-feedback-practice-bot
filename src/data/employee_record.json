@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "recordStatus": "mock",
+  "recordPurpose": "Synthetic practice data for the repeated-lateness rehearsal. Replace this file with the supplied synthetic employee record when it becomes available.",
+  "employee": {
+    "displayName": "Rohit",
+    "role": "Customer Operations Specialist",
+    "team": "Customer Operations",
+    "managerRelationship": "Direct report"
+  },
+  "scenario": {
+    "id": "repeated-lateness",
+    "title": "Repeated lateness",
+    "conversationGoal": "Address the repeated lateness clearly, understand what is getting in the way, and agree a dependable change and follow-up.",
+    "referencePeriod": "1–12 September 2026",
+    "meetingContext": "A private 1:1 meeting after the morning stand-up"
+  },
+  "observableEvents": [
+    {
+      "id": "late-2026-09-01",
+      "date": "2026-09-01",
+      "expectedTime": "09:30",
+      "arrivalTime": "09:46",
+      "observableBehaviour": "Joined the daily stand-up after it had started.",
+      "workImpact": "The team had to postpone assigning the first customer escalations."
+    },
+    {
+      "id": "late-2026-09-04",
+      "date": "2026-09-04",
+      "expectedTime": "09:30",
+      "arrivalTime": "09:42",
+      "observableBehaviour": "Joined the daily stand-up after it had started.",
+      "workImpact": "A colleague covered the opening handover to the early-shift team."
+    },
+    {
+      "id": "late-2026-09-08",
+      "date": "2026-09-08",
+      "expectedTime": "09:30",
+      "arrivalTime": "09:53",
+      "observableBehaviour": "Joined the daily stand-up after it had started.",
+      "workImpact": "The client-priority queue was reviewed without Rohit's update."
+    },
+    {
+      "id": "late-2026-09-11",
+      "date": "2026-09-11",
+      "expectedTime": "09:30",
+      "arrivalTime": "09:39",
+      "observableBehaviour": "Joined the daily stand-up after it had started.",
+      "workImpact": "The team lead had to repeat the rota changes after the meeting."
+    }
+  ],
+  "previousExpectation": {
+    "date": "2026-08-25",
+    "agreedExpectation": "Be ready for the 09:30 stand-up, or notify the team channel before it starts when a delay is unavoidable.",
+    "evidence": "Manager's prior 1:1 note"
+  },
+  "simulationGuidance": {
+    "persona": "Rohit is capable and cares about the team, but feels embarrassed and initially defensive about the pattern.",
+    "likelyPushbacks": [
+      "The train service has been unreliable lately.",
+      "I have stayed later to make up the time.",
+      "Other people are late sometimes too.",
+      "I do not think four occasions is a major issue."
+    ],
+    "roleplayRules": [
+      "Do not agree immediately after a well-structured opening.",
+      "Respond only to information the manager has actually raised.",
+      "Reveal one concern at a time rather than giving a long speech.",
+      "Become more constructive when the manager is specific, listens, and agrees a practical next step.",
+      "Do not invent HR history, medical information, or new performance incidents."
+    ]
+  },
+  "conversationBoundaries": {
+    "allowedEvidence": [
+      "The dated late arrivals in observableEvents",
+      "The direct work impacts attached to those events",
+      "The prior agreed expectation"
+    ],
+    "excludeFromConversation": [
+      "Health or sickness information",
+      "Anonymous peer or 360 feedback",
+      "Character labels such as lazy or entitled",
+      "An intention to create a PIP or manage Rohit out"
+    ],
+    "escalateInsteadOfCoaching": [
+      "A manager asks to make health information a performance issue",
+      "A manager asks for help to build a case to remove the employee",
+      "The conversation reveals a safeguarding, discrimination, or serious conduct concern"
+    ]
+  },
+  "replacementNotes": {
+    "howToReplace": "Replace this file's contents with the supplied synthetic record. Preserve this high-level shape where possible; if the source shape differs, update only employeeRecord.js.",
+    "neverAdd": "Do not add real employee data, private health details, passwords, API keys, or material copied from a real employer."
+  }
+}

@@ -1,6 +1,6 @@
-import { employeeContext } from './data/employeeContext.js';
+import { employeeContext } from "./data/employeeRecord.js";
 
-const steps = ['Context', 'Prepare', 'Rehearse', 'Debrief'];
+const steps = ["Context", "Prepare", "Rehearse", "Debrief"];
 
 function App() {
   return (
@@ -11,13 +11,17 @@ function App() {
           <h1>Practise the conversation before it matters.</h1>
         </div>
         <p className="simulation-badge" role="note">
-          <span aria-hidden="true">●</span> Simulation — not a prediction of a real employee
+          <span aria-hidden="true">●</span> Simulation — not a prediction of a
+          real employee
         </p>
       </header>
 
       <nav aria-label="Practice stages" className="stage-nav">
         {steps.map((step, index) => (
-          <div className={`stage ${index === 0 ? 'stage--active' : ''}`} key={step}>
+          <div
+            className={`stage ${index === 0 ? "stage--active" : ""}`}
+            key={step}
+          >
             <span className="stage-number">{index + 1}</span>
             <span>{step}</span>
           </div>
@@ -29,29 +33,38 @@ function App() {
           <p className="eyebrow">Step 1 of 4</p>
           <h2 id="context-title">Start with the relevant context.</h2>
           <p>
-            A difficult feedback conversation should be based on specific, observable work
-            behaviour—not assumptions about a person. This screen makes that boundary visible
-            before the rehearsal begins.
+            A difficult feedback conversation should be based on specific,
+            observable work behaviour—not assumptions about a person. This
+            screen makes that boundary visible before the rehearsal begins.
           </p>
 
           <article className="employee-card">
-            <div className="avatar" aria-hidden="true">R</div>
+            <div className="avatar" aria-hidden="true">
+              R
+            </div>
             <div>
               <p className="card-label">Employee in this simulation</p>
               <h3>{employeeContext.name}</h3>
-              <p>{employeeContext.scenario}</p>
+              <p>
+                {employeeContext.role} · {employeeContext.team}
+              </p>
             </div>
           </article>
         </div>
 
-        <aside className="record-notice" aria-labelledby="record-title">
-          <p className="notice-icon" aria-hidden="true">i</p>
+        <aside
+          className="record-notice record-notice--mock"
+          aria-labelledby="record-title"
+        >
+          <p className="notice-icon" aria-hidden="true">
+            ✓
+          </p>
           <div>
-            <h3 id="record-title">Employee record needed</h3>
+            <h3 id="record-title">Synthetic practice record</h3>
             <p>
-              The brief refers to a synthetic <code>employee_record.json</code>, but that file
-              has not been supplied with the brief. This screen is wired around a clearly marked
-              placeholder rather than inventing facts about Rohit.
+              This is a detailed mock <code>employee_record.json</code> for the
+              prototype. It is clearly marked as mock data and can be replaced
+              later through one adapter file.
             </p>
           </div>
         </aside>
@@ -60,9 +73,12 @@ function App() {
       <section className="decision-grid" aria-label="Conversation boundaries">
         <article className="decision-card decision-card--use">
           <p className="card-kicker">Use in the conversation</p>
-          <h2>Facts we can practise with</h2>
+          <h2>Observable evidence to practise with</h2>
+          <p className="evidence-period">{employeeContext.referencePeriod}</p>
           <ul>
-            {employeeContext.availableFacts.map((fact) => <li key={fact}>{fact}</li>)}
+            {employeeContext.availableFacts.map((fact) => (
+              <li key={fact.id}>{fact.text}</li>
+            ))}
           </ul>
         </article>
 
@@ -70,7 +86,9 @@ function App() {
           <p className="card-kicker">Keep out of the conversation</p>
           <h2>Topics that need a different route</h2>
           <ul>
-            {employeeContext.excludedTopics.map((topic) => <li key={topic}>{topic}</li>)}
+            {employeeContext.excludedTopics.map((topic) => (
+              <li key={topic}>{topic}</li>
+            ))}
           </ul>
         </article>
       </section>
@@ -78,17 +96,20 @@ function App() {
       <section className="next-step" aria-labelledby="next-step-title">
         <div>
           <p className="eyebrow">Next learning slice</p>
-          <h2 id="next-step-title">Build the transcript state before adding voice.</h2>
+          <h2 id="next-step-title">
+            Build the transcript state before adding voice.
+          </h2>
           <p>
-            We will next add a visible conversation transcript with sample turns. Voice and AI
-            come after the core conversation flow is easy to see and test.
+            We will next add a visible conversation transcript with sample
+            turns. Voice and AI come after the core conversation flow is easy to
+            see and test.
           </p>
         </div>
-        <button type="button" disabled aria-describedby="record-required">
+        <button type="button" disabled aria-describedby="prepare-next">
           Continue to Prepare
         </button>
-        <p id="record-required" className="visually-hidden">
-          Continuing is disabled until an employee record is supplied.
+        <p id="prepare-next" className="visually-hidden">
+          Continuing is disabled because Prepare mode is the next learning slice.
         </p>
       </section>
     </main>
