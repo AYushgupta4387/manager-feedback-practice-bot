@@ -54,7 +54,14 @@ export async function generateEmployeeReply({ employeeRecord, transcript }) {
     model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
     contents: createPrompt({ employeeRecord, transcript }),
     config: {
-      maxOutputTokens: 120,
+      // Gemini counts internal thinking and the visible answer against this limit.
+      // A small limit can leave only the beginning of Rohit's reply for the user.
+      maxOutputTokens: 512,
+      // This is a straightforward role-play response, so low thinking keeps the
+      // exchange quick and leaves most of the token budget for spoken dialogue.
+      thinkingConfig: {
+        thinkingLevel: "low",
+      },
       temperature: 0.5,
     },
   });

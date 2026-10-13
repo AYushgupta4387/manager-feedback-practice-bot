@@ -174,6 +174,21 @@ Run `pnpm dev`. This starts both the browser app and the local server.
 
 It works immediately with the local practice provider. To use Gemini later, copy `.env.example` to `.env`, add `GEMINI_API_KEY`, and restart `pnpm dev`. The `.env` file is ignored by Git, so the key is not committed.
 
+### 9. Complete Gemini replies
+
+**Summary:** Gemini replies now reserve enough room for Rohit's spoken answer instead of occasionally stopping after its first word.
+
+**What changed:**
+
+- Increased the total response limit from 120 to 512 tokens.
+- Told Gemini 3.8 Flash to use `low` thinking for this simple role-play task.
+
+**Why:** Gemini's internal thinking and the visible reply share the same token limit. At 120 tokens, internal thinking could consume nearly all of the budget, leaving only a partial word such as “To”. This is not a good place for deep reasoning: a quick, natural employee response is more useful.
+
+**What to learn:** A model's output limit is not always only the text a user sees. For thinking models, it can include hidden reasoning too. Match the reasoning level and token allowance to the task rather than setting a tiny limit just to make responses shorter.
+
+**Commit:** `fix: prevent truncated Gemini replies`
+
 ## Next step
 
 Build the Debrief screen from a completed transcript.
