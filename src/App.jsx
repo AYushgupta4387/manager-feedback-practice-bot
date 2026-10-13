@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { employeeContext } from "./data/employeeRecord.js";
+import { assessDraft, startingDraft } from "./lib/prepareFeedback.js";
 import { sampleTranscript } from "./data/sampleTranscript.js";
 
 const steps = [
   { id: "context", label: "Context", enabled: true },
-  { id: "prepare", label: "Prepare", enabled: false },
+  { id: "prepare", label: "Prepare", enabled: true },
   { id: "rehearse", label: "Rehearse", enabled: true },
   { id: "debrief", label: "Debrief", enabled: false },
 ];
 
 function App() {
   const [activeMode, setActiveMode] = useState("context");
+  const [draft, setDraft] = useState("");
   const [transcript, setTranscript] = useState([]);
   const [nextTurnIndex, setNextTurnIndex] = useState(0);
 
@@ -69,9 +71,18 @@ function App() {
         ))}
       </nav>
 
-      {activeMode === "context" ? (
-        <ContextScreen onOpenRehearsal={openRehearsal} />
-      ) : (
+      {activeMode === "context" && (
+        <ContextScreen onOpenPrepare={() => setActiveMode("prepare")} />
+      )}
+      {activeMode === "prepare" && (
+        <PrepareScreen
+          draft={draft}
+          onChangeDraft={setDraft}
+          onContinueToRehearsal={openRehearsal}
+          onLoadStartingDraft={() => setDraft(startingDraft)}
+        />
+      )}
+      {activeMode === "rehearse" && (
         <RehearsalScreen
           canAddSampleTurn={canAddSampleTurn}
           onAddSampleTurn={addSampleTurn}
@@ -84,7 +95,7 @@ function App() {
   );
 }
 
-function ContextScreen({ onOpenRehearsal }) {
+function ContextScreen({ onOpenPrepare }) {
   return (
     <>
       <section className="context-layout" aria-labelledby="context-title">
@@ -153,9 +164,107 @@ function ContextScreen({ onOpenRehearsal }) {
             replies using this same transcript structure.
           </p>
         </div>
-        <button onClick={onOpenRehearsal} type="button">Open transcript demo</button>
+        <button onClick={onOpenPrepare} type="button">Prepare your opening</button>
       </section>
     </>
+  );
+}
+
+function PrepareScreen({
+  draft,
+  onChangeDraft,
+  onContinueToRehearsal,
+  onLoadStartingDraft,
+}) {
+  const { checks, safetyMessages } = assessDraft(draft);
+  const completedChecks = checks.filter((check) => check.complete).length;
+
+  return (
+    <section className="prepare-screen" aria-labelledby="prepare-title">
+      <div className="prepare-heading">
+        <div>
+          <p className="eyebrow">Step 2 of 4 · Prepare</p>
+          <h2 id="prepare-title">Build an opening that is clear and fair.</h2>
+          <p>
+            Use Situation–Behaviour–Impact to describe what happened without
+            turning a work issue into a judgment about Rohit.
+          </p>
+        </div>
+        <span className="prepare-progress" aria-live="polite">
+          {completedChecks} of 4 SBI elements present
+        </span>
+      </div>
+
+      <div className="prepare-layout">
+        <section className="draft-panel" aria-labelledby="draft-title">
+          <div className="draft-panel-header">
+            <div>
+              <p className="eyebrow">Your opening</p>
+              <h3 id="draft-title">Write it as you would say it.</h3>
+            </div>
+            <button className="button--secondary" onClick={onLoadStartingDraft} type="button">
+              Load a starting draft
+            </button>
+          </div>
+
+          <label className="visually-hidden" htmlFor="opening-draft">
+            Opening feedback statement
+          </label>
+          <textarea
+            id="opening-draft"
+            onChange={(event) => onChangeDraft(event.target.value)}
+            placeholder="For example: Over the last two weeks, you joined the 09:30 stand-up late on four occasions..."
+            value={draft}
+          />
+          <p className="draft-helper">
+            This is local prototype guidance, not an assessment score. The goal
+            is a practical opening you can say out loud.
+          </p>
+        </section>
+
+        <aside className="sbi-panel" aria-labelledby="sbi-title">
+          <p className="eyebrow">SBI check</p>
+          <h3 id="sbi-title">Does the opening contain the essentials?</h3>
+          <ul className="sbi-checklist">
+            {checks.map((check) => (
+              <li className={check.complete ? "check--complete" : ""} key={check.id}>
+                <span aria-hidden="true">{check.complete ? "✓" : "○"}</span>
+                <div>
+                  <strong>{check.label}</strong>
+                  <p>{check.hint}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+
+      {safetyMessages.length > 0 && (
+        <aside className="safety-guidance" aria-live="polite" aria-label="Safety guidance">
+          <p className="notice-icon" aria-hidden="true">!</p>
+          <div>
+            <h3>Use a different route for this request</h3>
+            <ul>
+              {safetyMessages.map((message) => <li key={message}>{message}</li>)}
+            </ul>
+          </div>
+        </aside>
+      )}
+
+      <section className="prepare-next-step" aria-labelledby="prepare-next-title">
+        <div>
+          <p className="eyebrow">When the opening is ready</p>
+          <h3 id="prepare-next-title">Practise saying it in the rehearsal.</h3>
+          <p>
+            In the next technical slice, your final draft will become the first
+            spoken manager turn rather than a fixed sample sentence.
+          </p>
+        </div>
+        <button onClick={onContinueToRehearsal} type="button">
+          Continue to rehearsal demo
+        </button>
+      </section>
+    </section>
   );
 }
 
