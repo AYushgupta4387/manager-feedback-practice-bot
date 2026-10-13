@@ -60,6 +60,20 @@ function App() {
     ]);
   };
 
+  const markLatestEmployeeTurnInterrupted = () => {
+    setTranscript((currentTranscript) => {
+      const lastEmployeeIndex = currentTranscript
+        .map((turn) => turn.speaker)
+        .lastIndexOf("employee");
+
+      if (lastEmployeeIndex === -1) return currentTranscript;
+
+      return currentTranscript.map((turn, index) =>
+        index === lastEmployeeIndex ? { ...turn, interrupted: true } : turn,
+      );
+    });
+  };
+
   const canAddSampleTurn = nextTurnIndex < sampleTranscript.length;
 
   return (
@@ -108,6 +122,7 @@ function App() {
           canAddSampleTurn={canAddSampleTurn}
           onAddSampleTurn={addSampleTurn}
           onBackToContext={() => setActiveMode("context")}
+          onInterruptEmployee={markLatestEmployeeTurnInterrupted}
           onManagerSpeechComplete={addManagerSpeechTurn}
           onResetTranscript={resetTranscript}
           transcript={transcript}
@@ -294,6 +309,7 @@ function RehearsalScreen({
   canAddSampleTurn,
   onAddSampleTurn,
   onBackToContext,
+  onInterruptEmployee,
   onManagerSpeechComplete,
   onResetTranscript,
   transcript,
@@ -313,18 +329,25 @@ function RehearsalScreen({
     .find((turn) => turn.speaker === "employee");
   const isSpeaking = status === "speaking";
   const isListening = recognitionStatus === "listening";
+  const isStarting = recognitionStatus === "starting";
   const isFinishing = recognitionStatus === "finishing";
   const recognitionPreview = [finalText, interimText].filter(Boolean).join(" ");
+
+  const interruptAndSpeak = () => {
+    stop();
+    onInterruptEmployee();
+    start();
+  };
 
   return (
     <section className="rehearsal-screen" aria-labelledby="rehearsal-title">
       <div className="rehearsal-heading">
         <div>
-          <p className="eyebrow">Text-only rehearsal prototype</p>
+          <p className="eyebrow">Browser voice rehearsal prototype</p>
           <h2 id="rehearsal-title">Practise with {employeeContext.name}.</h2>
           <p>
-            These are fixed sample turns. They let us prove the conversation
-            state before microphone input, audio playback, or AI is involved.
+            These are fixed sample replies. Use your voice for the manager,
+            hear Rohit's reply, and practise taking the floor when needed.
           </p>
         </div>
         <button className="button--secondary" onClick={onBackToContext} type="button">
@@ -352,7 +375,10 @@ function RehearsalScreen({
             {transcript.map((turn) => (
               <li className={`transcript-turn transcript-turn--${turn.speaker}`} key={turn.id}>
                 <div className="turn-meta">
-                  <strong>{turn.speakerLabel}</strong>
+                  <span className="turn-speaker">
+                    <strong>{turn.speakerLabel}</strong>
+                    {turn.interrupted && <span className="interruption-label">Interrupted</span>}
+                  </span>
                   <time>{turn.time}</time>
                 </div>
                 <p>{turn.text}</p>
@@ -386,11 +412,19 @@ function RehearsalScreen({
         </div>
         <div className="speech-actions">
           <button
-            disabled={!latestEmployeeTurn || !isSupported}
-            onClick={() => speak(latestEmployeeTurn.text)}
+            disabled={
+              isSpeaking
+                ? !isRecognitionSupported
+                : !latestEmployeeTurn || !isSupported
+            }
+            onClick={() =>
+              isSpeaking
+                ? interruptAndSpeak()
+                : speak(latestEmployeeTurn.text)
+            }
             type="button"
           >
-            Play Rohit's latest reply
+            {isSpeaking ? "Interrupt and speak" : "Play Rohit's latest reply"}
           </button>
           <button
             className="button--secondary"
@@ -409,8 +443,12 @@ function RehearsalScreen({
           <h3 id="voice-input-title">Speak as the manager.</h3>
           <p className="voice-input-status" aria-live="polite">
             {recognitionError ||
-              (isListening
-                ? "Listening. Take your time, then choose Finish turn."
+              (isSpeaking
+                ? "Rohit is speaking. Choose Interrupt and speak to take the floor."
+                : isListening
+                  ? "Listening. Take your time, then choose Finish turn."
+                : isStarting
+                  ? "Opening the microphone…"
                 : isFinishing
                   ? "Finishing your turn…"
                   : isRecognitionSupported
@@ -420,7 +458,13 @@ function RehearsalScreen({
         </div>
         <div className="voice-input-actions">
           <button
-            disabled={!isRecognitionSupported || isListening || isFinishing}
+            disabled={
+              !isRecognitionSupported ||
+              isSpeaking ||
+              isListening ||
+              isStarting ||
+              isFinishing
+            }
             onClick={start}
             type="button"
           >
@@ -449,9 +493,9 @@ function RehearsalScreen({
         <p className="notice-icon" aria-hidden="true">i</p>
         <p>
           <strong>Why this is a separate step:</strong> Manual finish gives
-          the manager control over when their turn ends. We will connect speech
-          playback and microphone input in the next step, when we add
-          interruption.
+          the manager control over when their turn ends. Interrupting Rohit
+          stops audio before opening the microphone, so the employee's voice is
+          not captured as the manager's turn.
         </p>
       </aside>
     </section>

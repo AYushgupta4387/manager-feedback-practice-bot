@@ -399,6 +399,19 @@ button:disabled {
 .turn-meta time {
   color: #829ab1;
 }
+.turn-speaker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.interruption-label {
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: #fed7aa;
+  color: #9a3412;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
 .transcript-turn p {
   margin-bottom: 0;
   color: #243b53;
