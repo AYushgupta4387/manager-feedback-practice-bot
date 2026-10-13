@@ -136,27 +136,40 @@ For now, the browser uses fixed sample replies. That lets us learn the user expe
 
 **Commit:** `a3494bf feat: add manager speech transcription`
 
+### 7. Voice turn-taking and interruption
+
+**Summary:** The manager can now take the floor while Rohit is speaking.
+
+**What changed:**
+
+- Changed Rohit's play button into “Interrupt and speak” while his browser voice is active.
+- Stopped Rohit's audio before starting manager speech recognition.
+- Marked Rohit's most recent reply as “Interrupted” in the visible transcript.
+- Disabled the ordinary Start speaking action while Rohit is speaking, so the microphone does not accidentally capture the simulated employee voice.
+
+**What to learn:** This is a small state machine in practice. The important rule is: stop one source of audio before starting another. That makes the conversation understandable for the person using it and keeps the transcript accurate.
+
+**Commit:** `90d0fdf feat: support voice interruption`
+
 ## Next step
 
-Connect employee playback and manager speech into one turn-taking flow, including interruption.
+Add a local Node server and an AI provider for adaptive employee replies.
 
 The planned behaviour is:
 
 ```text
-Rohit is speaking
-  → manager chooses “Interrupt and speak”
-  → Rohit's audio stops
-  → manager microphone starts
-  → interrupted state is recorded in the transcript
+Manager finishes a transcript turn
+  → browser sends the scenario and transcript to a local server
+  → server asks an AI model for Rohit's next short reply
+  → browser adds the reply to the transcript and can play it aloud
 ```
 
-The push-to-talk step remains manual. We will reuse that behaviour so interruption is explicit and easy to understand.
+We will keep the AI provider behind one small server module. That keeps the API key out of the browser and makes a future model change contained.
 
 ## Future steps
 
-1. Add a local Node server and an AI provider for adaptive employee replies.
-2. Add a structured Debrief screen based on the completed transcript.
-3. Test difficult cases and document the app's limits and tradeoffs.
+1. Add a structured Debrief screen based on the completed transcript.
+2. Test difficult cases and document the app's limits and tradeoffs.
 
 ## How to read this guide
 
