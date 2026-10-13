@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { employeeContext } from "./data/employeeRecord.js";
+import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis.js";
 import { assessDraft, startingDraft } from "./lib/prepareFeedback.js";
 import { sampleTranscript } from "./data/sampleTranscript.js";
 
@@ -275,6 +276,12 @@ function RehearsalScreen({
   onResetTranscript,
   transcript,
 }) {
+  const { error, isSupported, speak, status, stop } = useSpeechSynthesis();
+  const latestEmployeeTurn = [...transcript]
+    .reverse()
+    .find((turn) => turn.speaker === "employee");
+  const isSpeaking = status === "speaking";
+
   return (
     <section className="rehearsal-screen" aria-labelledby="rehearsal-title">
       <div className="rehearsal-heading">
@@ -330,12 +337,45 @@ function RehearsalScreen({
         </footer>
       </section>
 
+      <section className="speech-panel" aria-labelledby="speech-title">
+        <div>
+          <p className="eyebrow">Rohit's voice</p>
+          <h3 id="speech-title">Play the latest employee reply.</h3>
+          <p className="speech-status" aria-live="polite">
+            {error ||
+              (isSpeaking
+                ? "Rohit is speaking — simulated employee."
+                : isSupported
+                  ? "Ready to play a simulated employee reply."
+                  : "Text-to-speech is unavailable in this browser.")}
+          </p>
+        </div>
+        <div className="speech-actions">
+          <button
+            disabled={!latestEmployeeTurn || !isSupported}
+            onClick={() => speak(latestEmployeeTurn.text)}
+            type="button"
+          >
+            Play Rohit's latest reply
+          </button>
+          <button
+            className="button--secondary"
+            disabled={!isSpeaking}
+            onClick={stop}
+            type="button"
+          >
+            Stop Rohit
+          </button>
+        </div>
+      </section>
+
       <aside className="learning-note" aria-label="Why this comes before voice">
         <p className="notice-icon" aria-hidden="true">i</p>
         <p>
-          <strong>Why build this first?</strong> Voice and AI will both add
-          turns to this list. Getting the transcript model right first keeps
-          those later features small and testable.
+          <strong>Why this is a separate step:</strong> Browser text-to-speech
+          can reuse the transcript without adding an AI provider. In the next
+          voice step, interrupting the employee will stop this same playback
+          before microphone listening begins.
         </p>
       </aside>
     </section>
