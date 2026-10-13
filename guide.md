@@ -45,6 +45,7 @@ For now, the browser uses fixed sample replies. That lets us learn the user expe
 | `src/data/sampleTranscript.js` | Fixed manager and employee turns for rehearsal |
 | `src/lib/prepareFeedback.js` | SBI checks and safe-coaching guidance |
 | `src/hooks/useSpeechSynthesis.js` | Reusable browser text-to-speech behaviour |
+| `src/hooks/useSpeechRecognition.js` | Reusable browser speech-to-text behaviour |
 
 ## Completed steps
 
@@ -119,27 +120,43 @@ For now, the browser uses fixed sample replies. That lets us learn the user expe
 
 **Commit:** `ec907c5 feat: add employee speech playback`
 
+### 6. Manager push-to-talk
+
+**Summary:** The manager can now create a spoken turn with the browser microphone.
+
+**What changed:**
+
+- Added `useSpeechRecognition`, a reusable hook around the browser's `SpeechRecognition` API.
+- Added Start speaking and Finish turn controls in Rehearse.
+- Showed live transcribed words before the manager finishes.
+- Added the finished words as a clearly labelled manager turn in the transcript.
+- Added useful messages for unavailable speech recognition, permission, microphone, and network problems.
+
+**What to learn:** Speech recognition gives partial words while the user is talking and final words when it is confident. We only add the turn after an explicit Finish turn click, so a pause for thought does not normally end the manager's turn.
+
+**Commit:** `a3494bf feat: add manager speech transcription`
+
 ## Next step
 
-Add push-to-talk for the manager with the browser's `SpeechRecognition` API.
+Connect employee playback and manager speech into one turn-taking flow, including interruption.
 
-The first version will be deliberately simple:
+The planned behaviour is:
 
 ```text
-Manager presses “Start speaking”
-  → browser listens
-  → manager presses “Finish turn”
-  → final text becomes a manager transcript turn
+Rohit is speaking
+  → manager chooses “Interrupt and speak”
+  → Rohit's audio stops
+  → manager microphone starts
+  → interrupted state is recorded in the transcript
 ```
 
-We will not use automatic silence detection at first. A manager may pause to choose their words, and automatic detection could end their turn too early.
+The push-to-talk step remains manual. We will reuse that behaviour so interruption is explicit and easy to understand.
 
 ## Future steps
 
-1. Connect speech playback and manager speech into a turn-taking flow, including interruption.
-2. Add a local Node server and an AI provider for adaptive employee replies.
-3. Add a structured Debrief screen based on the completed transcript.
-4. Test difficult cases and document the app's limits and tradeoffs.
+1. Add a local Node server and an AI provider for adaptive employee replies.
+2. Add a structured Debrief screen based on the completed transcript.
+3. Test difficult cases and document the app's limits and tradeoffs.
 
 ## How to read this guide
 
