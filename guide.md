@@ -189,6 +189,19 @@ It works immediately with the local practice provider. To use Gemini later, copy
 
 **Commit:** `fix: prevent truncated Gemini replies`
 
+### 10. Focused replies and automatic playback
+
+**Summary:** Rohit now responds specifically to the manager's latest sentence and begins speaking the newly generated reply automatically.
+
+**What changed:**
+
+- Made the latest manager turn a clearly labelled, high-priority response target in the Gemini prompt.
+- Instructed Gemini to answer the exact latest question, request, or concern instead of giving a generic acknowledgement.
+- Added a browser effect that plays each newly generated Rohit reply once, after it appears in the transcript.
+- Kept the Play button as a useful fallback to replay the latest response; it does not cause the automatic response to repeat.
+
+**What to learn:** Context alone is not enough. In a conversation prompt, the model needs a clear indication of which message it should answer now. On the browser side, an effect is the right place to react to a new reply because it runs after React has added that reply to the transcript.
+
 ## Next step
 
 Build the Debrief screen from a completed transcript.

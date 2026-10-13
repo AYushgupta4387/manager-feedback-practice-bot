@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { employeeContext } from "./data/employeeRecord.js";
 import { useSpeechRecognition } from "./hooks/useSpeechRecognition.js";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis.js";
@@ -352,6 +352,7 @@ function RehearsalScreen({
   transcript,
 }) {
   const { error, isSupported, speak, status, stop } = useSpeechSynthesis();
+  const autoPlayedReplyIdRef = useRef(null);
   const {
     error: recognitionError,
     finalText,
@@ -371,6 +372,20 @@ function RehearsalScreen({
   const isFinishing = recognitionStatus === "finishing";
   const recognitionPreview = [finalText, interimText].filter(Boolean).join(" ");
 
+  useEffect(() => {
+    if (
+      replyStatus !== "ready" ||
+      !latestEmployeeTurn ||
+      !isSupported ||
+      autoPlayedReplyIdRef.current === latestEmployeeTurn.id
+    ) {
+      return;
+    }
+
+    autoPlayedReplyIdRef.current = latestEmployeeTurn.id;
+    speak(latestEmployeeTurn.text);
+  }, [isSupported, latestEmployeeTurn, replyStatus, speak]);
+
   const interruptAndSpeak = () => {
     stop();
     onInterruptEmployee();
@@ -384,8 +399,8 @@ function RehearsalScreen({
           <p className="eyebrow">Browser voice rehearsal prototype</p>
           <h2 id="rehearsal-title">Practise with {employeeContext.name}.</h2>
           <p>
-            These are fixed sample replies. Use your voice for the manager,
-            hear Rohit's reply, and practise taking the floor when needed.
+            The opening turns are a fixed demo. Your completed manager turn
+            receives an adaptive reply that Rohit speaks automatically.
           </p>
         </div>
         <button className="button--secondary" onClick={onBackToContext} type="button">
