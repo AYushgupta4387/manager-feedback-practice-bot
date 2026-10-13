@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { employeeContext } from "./data/employeeRecord.js";
+import { useSpeechRecognition } from "./hooks/useSpeechRecognition.js";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis.js";
 import { assessDraft, startingDraft } from "./lib/prepareFeedback.js";
 import { sampleTranscript } from "./data/sampleTranscript.js";
@@ -38,6 +39,25 @@ function App() {
   const resetTranscript = () => {
     setTranscript([]);
     setNextTurnIndex(0);
+  };
+
+  const addManagerSpeechTurn = (text) => {
+    const time = new Intl.DateTimeFormat("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date());
+
+    setTranscript((currentTranscript) => [
+      ...currentTranscript,
+      {
+        id: `manager-${Date.now()}`,
+        speaker: "manager",
+        speakerLabel: "Manager",
+        text,
+        time,
+      },
+    ]);
   };
 
   const canAddSampleTurn = nextTurnIndex < sampleTranscript.length;
@@ -88,6 +108,7 @@ function App() {
           canAddSampleTurn={canAddSampleTurn}
           onAddSampleTurn={addSampleTurn}
           onBackToContext={() => setActiveMode("context")}
+          onManagerSpeechComplete={addManagerSpeechTurn}
           onResetTranscript={resetTranscript}
           transcript={transcript}
         />
@@ -273,14 +294,27 @@ function RehearsalScreen({
   canAddSampleTurn,
   onAddSampleTurn,
   onBackToContext,
+  onManagerSpeechComplete,
   onResetTranscript,
   transcript,
 }) {
   const { error, isSupported, speak, status, stop } = useSpeechSynthesis();
+  const {
+    error: recognitionError,
+    finalText,
+    finish,
+    interimText,
+    isSupported: isRecognitionSupported,
+    start,
+    status: recognitionStatus,
+  } = useSpeechRecognition({ onComplete: onManagerSpeechComplete });
   const latestEmployeeTurn = [...transcript]
     .reverse()
     .find((turn) => turn.speaker === "employee");
   const isSpeaking = status === "speaking";
+  const isListening = recognitionStatus === "listening";
+  const isFinishing = recognitionStatus === "finishing";
+  const recognitionPreview = [finalText, interimText].filter(Boolean).join(" ");
 
   return (
     <section className="rehearsal-screen" aria-labelledby="rehearsal-title">
@@ -369,13 +403,55 @@ function RehearsalScreen({
         </div>
       </section>
 
+      <section className="voice-input-panel" aria-labelledby="voice-input-title">
+        <div>
+          <p className="eyebrow">Your voice</p>
+          <h3 id="voice-input-title">Speak as the manager.</h3>
+          <p className="voice-input-status" aria-live="polite">
+            {recognitionError ||
+              (isListening
+                ? "Listening. Take your time, then choose Finish turn."
+                : isFinishing
+                  ? "Finishing your turn…"
+                  : isRecognitionSupported
+                    ? "Start speaking when you are ready."
+                    : "Speech recognition is unavailable in this browser.")}
+          </p>
+        </div>
+        <div className="voice-input-actions">
+          <button
+            disabled={!isRecognitionSupported || isListening || isFinishing}
+            onClick={start}
+            type="button"
+          >
+            Start speaking
+          </button>
+          <button
+            className="button--secondary"
+            disabled={!isListening}
+            onClick={finish}
+            type="button"
+          >
+            Finish turn
+          </button>
+        </div>
+        <div className="voice-preview" aria-live="polite">
+          <strong>Live transcript</strong>
+          <p>{recognitionPreview || "Your words will appear here while you speak."}</p>
+        </div>
+        <p className="voice-input-note">
+          Your turn is added only after you choose Finish turn. This prototype
+          keeps the transcript in the browser and does not send it to an AI.
+        </p>
+      </section>
+
       <aside className="learning-note" aria-label="Why this comes before voice">
         <p className="notice-icon" aria-hidden="true">i</p>
         <p>
-          <strong>Why this is a separate step:</strong> Browser text-to-speech
-          can reuse the transcript without adding an AI provider. In the next
-          voice step, interrupting the employee will stop this same playback
-          before microphone listening begins.
+          <strong>Why this is a separate step:</strong> Manual finish gives
+          the manager control over when their turn ends. We will connect speech
+          playback and microphone input in the next step, when we add
+          interruption.
         </p>
       </aside>
     </section>

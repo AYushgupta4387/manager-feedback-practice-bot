@@ -434,6 +434,46 @@ button:disabled {
   flex: 0 0 auto;
   gap: 10px;
 }
+.voice-input-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px 22px;
+  padding: 22px 24px;
+  border: 1px solid #b8d8d3;
+  border-radius: 16px;
+  background: #f0fdfa;
+}
+.voice-input-panel h3 {
+  margin-bottom: 4px;
+}
+.voice-input-status,
+.voice-input-note {
+  margin-bottom: 0;
+  color: #334e68;
+}
+.voice-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.voice-preview {
+  grid-column: 1 / -1;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #fff;
+}
+.voice-preview strong {
+  color: #0f5f58;
+  font-size: 0.85rem;
+}
+.voice-preview p {
+  margin: 5px 0 0;
+  color: #243b53;
+}
+.voice-input-note {
+  grid-column: 1 / -1;
+  font-size: 0.9rem;
+}
 .learning-note {
   justify-content: flex-start;
   padding: 16px 18px;
@@ -649,9 +689,17 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
   .speech-panel,
-  .speech-actions {
+  .speech-actions,
+  .voice-input-actions {
     flex-direction: column;
     align-items: stretch;
+  }
+  .voice-input-panel {
+    grid-template-columns: 1fr;
+  }
+  .voice-preview,
+  .voice-input-note {
+    grid-column: auto;
   }
   .transcript-turn {
     max-width: 100%;
