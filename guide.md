@@ -202,6 +202,18 @@ It works immediately with the local practice provider. To use Gemini later, copy
 
 **What to learn:** Context alone is not enough. In a conversation prompt, the model needs a clear indication of which message it should answer now. On the browser side, an effect is the right place to react to a new reply because it runs after React has added that reply to the transcript.
 
+### 11. Retry an unavailable reply
+
+**Summary:** If Rohit cannot reply, the app now lets the manager resend the last message.
+
+**What changed:**
+
+- Added a “Resend last manager message” button to the reply-error panel.
+- Reused the saved conversation transcript for the retry, so the manager's message is not duplicated.
+- Reused the normal reply and automatic-speech path when the retry succeeds.
+
+**What to learn:** A retry should repeat the failed request, not repeat the user's action. Keeping the transcript in browser state lets us retry safely while preserving the conversation record.
+
 ## Next step
 
 Build the Debrief screen from a completed transcript.
