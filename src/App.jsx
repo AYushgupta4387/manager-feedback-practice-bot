@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { employeeContext } from "./data/employeeRecord.js";
 import { useSpeechRecognition } from "./hooks/useSpeechRecognition.js";
 import { useSpeechSynthesis } from "./hooks/useSpeechSynthesis.js";
+import { createDebrief } from "./lib/debriefFeedback.js";
 import { assessDraft, startingDraft } from "./lib/prepareFeedback.js";
 import { requestEmployeeReply } from "./lib/rehearsalApi.js";
 import { sampleTranscript } from "./data/sampleTranscript.js";
@@ -10,7 +11,7 @@ const steps = [
   { id: "context", label: "Context", enabled: true },
   { id: "prepare", label: "Prepare", enabled: true },
   { id: "rehearse", label: "Rehearse", enabled: true },
-  { id: "debrief", label: "Debrief", enabled: false },
+  { id: "debrief", label: "Debrief", enabled: true },
 ];
 
 function formatTurnTime() {
@@ -174,12 +175,19 @@ function App() {
           onBackToContext={() => setActiveMode("context")}
           onInterruptEmployee={markLatestEmployeeTurnInterrupted}
           onManagerSpeechComplete={addManagerSpeechTurn}
+          onOpenDebrief={() => setActiveMode("debrief")}
           onResetTranscript={resetTranscript}
           onRetryLastManagerMessage={retryLastManagerMessage}
           replyError={replyError}
           replyFallbackReason={replyFallbackReason}
           replySource={replySource}
           replyStatus={replyStatus}
+          transcript={transcript}
+        />
+      )}
+      {activeMode === "debrief" && (
+        <DebriefScreen
+          onBackToRehearsal={() => setActiveMode("rehearse")}
           transcript={transcript}
         />
       )}
@@ -366,6 +374,7 @@ function RehearsalScreen({
   onBackToContext,
   onInterruptEmployee,
   onManagerSpeechComplete,
+  onOpenDebrief,
   onResetTranscript,
   onRetryLastManagerMessage,
   replyError,
@@ -469,6 +478,9 @@ function RehearsalScreen({
           </button>
           <button className="button--secondary" onClick={onResetTranscript} type="button">
             Reset transcript
+          </button>
+          <button onClick={onOpenDebrief} type="button">
+            Debrief this conversation
           </button>
         </footer>
       </section>
@@ -614,6 +626,84 @@ function RehearsalScreen({
           not captured as the manager's turn.
         </p>
       </aside>
+    </section>
+  );
+}
+
+function DebriefScreen({ onBackToRehearsal, transcript }) {
+  const managerTurns = transcript.filter((turn) => turn.speaker === "manager");
+  const debrief = createDebrief(transcript);
+
+  return (
+    <section className="debrief-screen" aria-labelledby="debrief-title">
+      <div className="debrief-heading">
+        <div>
+          <p className="eyebrow">Step 4 of 4</p>
+          <h2 id="debrief-title">Turn the rehearsal into a better next conversation.</h2>
+          <p>
+            This coaching is based on the manager turns in the visible transcript.
+            It is a practice aid, not a performance judgement.
+          </p>
+        </div>
+        <button className="button--secondary" onClick={onBackToRehearsal} type="button">
+          Back to rehearsal
+        </button>
+      </div>
+
+      {managerTurns.length === 0 ? (
+        <section className="debrief-empty">
+          <p className="notice-icon" aria-hidden="true">i</p>
+          <div>
+            <h3>There is no manager turn to review yet.</h3>
+            <p>Record or add a manager turn in Rehearse, then return here for specific coaching.</p>
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className={`debrief-readiness debrief-readiness--${debrief.readiness.tone}`}>
+            <div>
+              <p className="eyebrow">Readiness call</p>
+              <h3>{debrief.readiness.label}</h3>
+              <p>{debrief.readiness.summary}</p>
+            </div>
+            <span>{managerTurns.length} manager {managerTurns.length === 1 ? "turn" : "turns"} reviewed</span>
+          </section>
+
+          <div className="debrief-grid">
+            <section className="debrief-card debrief-card--worked">
+              <p className="card-kicker">What worked</p>
+              <h3>{debrief.worked.title}</h3>
+              <blockquote>{debrief.worked.quote}</blockquote>
+              <p>{debrief.worked.explanation}</p>
+            </section>
+            <section className="debrief-card debrief-card--improve">
+              <p className="card-kicker">One improvement</p>
+              <h3>{debrief.improvement.title}</h3>
+              <blockquote>{debrief.improvement.quote}</blockquote>
+              <p>{debrief.improvement.explanation}</p>
+            </section>
+          </div>
+
+          <section className="revised-opening" aria-labelledby="revised-opening-title">
+            <p className="eyebrow">Try this opening</p>
+            <h3 id="revised-opening-title">A clearer, fairer version</h3>
+            <p>{debrief.revisedOpening}</p>
+          </section>
+
+          <section className="pushback-panel" aria-labelledby="pushback-title">
+            <p className="eyebrow">Prepare for pushback</p>
+            <h3 id="pushback-title">Keep the conversation constructive</h3>
+            <div className="pushback-grid">
+              {debrief.pushbacks.map((pushback) => (
+                <article className="pushback-card" key={pushback.employee}>
+                  <p><strong>Rohit might say:</strong> “{pushback.employee}”</p>
+                  <p><strong>You could say:</strong> {pushback.manager}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </section>
   );
 }

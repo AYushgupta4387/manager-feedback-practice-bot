@@ -22,7 +22,7 @@ Manager using the browser
   ├─ Context: see the facts for the scenario
   ├─ Prepare: write a clear feedback opening
   ├─ Rehearse: see and hear a practice conversation
-  └─ Debrief: receive practical coaching (future)
+  └─ Debrief: receive practical coaching from the transcript
 
 Browser features
   ├─ React interface and transcript state
@@ -34,7 +34,7 @@ Local server
   └─ Creates adaptive replies, or local practice replies without a key
 ```
 
-For now, the browser uses fixed sample replies. That lets us learn the user experience before we add a microphone or AI model.
+The opening sample turns make the first rehearsal easy to explore. After the manager speaks, the browser adds an adaptive employee response when a provider is available.
 
 ## Where the important code lives
 
@@ -45,6 +45,7 @@ For now, the browser uses fixed sample replies. That lets us learn the user expe
 | `src/data/employeeRecord.js` | Adapts the record data into a shape the UI can use |
 | `src/data/sampleTranscript.js` | Fixed manager and employee turns for rehearsal |
 | `src/lib/prepareFeedback.js` | SBI checks and safe-coaching guidance |
+| `src/lib/debriefFeedback.js` | Deterministic transcript coaching for the Debrief screen |
 | `src/hooks/useSpeechSynthesis.js` | Reusable browser text-to-speech behaviour |
 | `src/hooks/useSpeechRecognition.js` | Reusable browser speech-to-text behaviour |
 
@@ -228,20 +229,23 @@ It works immediately with the local practice provider. To use Gemini later, copy
 
 **What to learn:** Resilience should be precise. We fail over only for the error that means “this model's quota is exhausted,” not for every API error. This avoids hiding real setup or network problems while keeping the rehearsal usable during a quota pause.
 
+### 13. Transcript debrief
+
+**Summary:** The manager can now review a completed rehearsal and get practical, transcript-based coaching.
+
+**What changed:**
+
+- Enabled the Debrief stage and added a “Debrief this conversation” action in Rehearse.
+- Added a clear readiness call based on situation, behaviour, impact, and an invited next step.
+- Shows one quoted manager moment that worked and one quoted moment to improve.
+- Provides a revised SBI opening and two constructive responses to likely pushbacks.
+- Kept the first debrief deterministic and in the browser, so it remains available during API quota limits.
+
+**What to learn:** The transcript is a useful source of evidence. A dependable first version can use small, transparent rules to point to actual wording before we decide whether AI-generated coaching adds enough value.
+
 ## Next step
 
-Build the Debrief screen from a completed transcript.
-
-The planned behaviour is:
-
-```text
-Manager ends the rehearsal
-  → browser sends the transcript to the local server
-  → server returns structured coaching
-  → browser shows what worked, what to improve, and a revised opening
-```
-
-The debrief will be practical rather than a score. It will include a clear readiness call, a worked moment, an improvement moment, a revised opening, and likely pushbacks.
+Test difficult conversations and document the app's limits and tradeoffs.
 
 ## Future steps
 

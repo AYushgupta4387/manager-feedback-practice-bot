@@ -683,6 +683,120 @@ textarea:focus {
   padding: 24px;
 }
 
+.debrief-screen {
+  display: grid;
+  gap: 24px;
+}
+.debrief-heading,
+.debrief-readiness,
+.debrief-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.debrief-heading > div {
+  max-width: 720px;
+}
+.debrief-heading p:last-child,
+.debrief-readiness p:last-child,
+.debrief-empty p:last-child {
+  margin-bottom: 0;
+}
+.debrief-readiness,
+.debrief-empty,
+.revised-opening,
+.pushback-panel,
+.debrief-card {
+  border: 1px solid #d9e2ec;
+  border-radius: 16px;
+  background: #fff;
+}
+.debrief-readiness {
+  padding: 22px 24px;
+  border-left: 5px solid #0f766e;
+}
+.debrief-readiness--nearly-ready {
+  border-left-color: #d69e2e;
+  background: #fffbea;
+}
+.debrief-readiness--needs-work {
+  border-left-color: #c05621;
+  background: #fff2ed;
+}
+.debrief-readiness h3 {
+  margin-bottom: 4px;
+}
+.debrief-readiness span {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #e8f5f3;
+  color: #0f5f58;
+  font-size: 0.82rem;
+  font-weight: 760;
+}
+.debrief-grid,
+.pushback-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.debrief-card,
+.revised-opening,
+.pushback-panel {
+  padding: 24px;
+}
+.debrief-card--worked {
+  border-top: 4px solid #0f766e;
+}
+.debrief-card--improve {
+  border-top: 4px solid #d69e2e;
+}
+.debrief-card blockquote {
+  margin: 18px 0 14px;
+  padding: 12px 14px;
+  border-left: 3px solid #9fb3c8;
+  background: #f0f4f8;
+  color: #334e68;
+  line-height: 1.55;
+}
+.debrief-card p:last-child,
+.revised-opening p:last-child,
+.pushback-card p:last-child {
+  margin-bottom: 0;
+}
+.revised-opening {
+  border-color: #b8d8d3;
+  background: #f0fdfa;
+}
+.revised-opening p:last-child {
+  color: #243b53;
+  font-size: 1.04rem;
+}
+.pushback-panel h3 {
+  margin-bottom: 18px;
+}
+.pushback-card {
+  padding: 17px;
+  border: 1px solid #d9e2ec;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.pushback-card p {
+  color: #334e68;
+}
+.debrief-empty {
+  justify-content: flex-start;
+  padding: 22px 24px;
+  border-color: #bcd6f4;
+  background: #eff6ff;
+}
+.debrief-empty .notice-icon {
+  flex: 0 0 24px;
+  background: #2563eb;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -708,7 +822,9 @@ textarea:focus {
   .transcript-actions,
   .prepare-heading,
   .draft-panel-header,
-  .prepare-next-step {
+  .prepare-next-step,
+  .debrief-heading,
+  .debrief-readiness {
     flex-direction: column;
     align-items: stretch;
   }
@@ -733,6 +849,10 @@ textarea:focus {
     width: 100%;
   }
   .prepare-layout {
+    grid-template-columns: 1fr;
+  }
+  .debrief-grid,
+  .pushback-grid {
     grid-template-columns: 1fr;
   }
   .speech-panel,
