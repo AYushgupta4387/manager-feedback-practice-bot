@@ -214,6 +214,20 @@ It works immediately with the local practice provider. To use Gemini later, copy
 
 **What to learn:** A retry should repeat the failed request, not repeat the user's action. Keeping the transcript in browser state lets us retry safely while preserving the conversation record.
 
+### 12. Quota-aware model fallback
+
+**Summary:** The server now tries a configured Gemini model chain and uses the built-in local reply when every Gemini option is temporarily unavailable.
+
+**What changed:**
+
+- Added `GEMINI_MODELS` to `.env`, keeping the ordered model list outside the source code.
+- Tries 3.8 Flash, 3.6 Flash, 3.5 Flash Lite, then 3.1 Flash Lite in that order.
+- Moves to the next model only after Gemini returns `429 RESOURCE_EXHAUSTED`.
+- Stores each exhausted model's retry time in the running server, so later turns skip it until Gemini says it can be retried.
+- Uses the existing local practice reply after every configured Gemini model is unavailable, and explains that fallback in the interface.
+
+**What to learn:** Resilience should be precise. We fail over only for the error that means “this model's quota is exhausted,” not for every API error. This avoids hiding real setup or network problems while keeping the rehearsal usable during a quota pause.
+
 ## Next step
 
 Build the Debrief screen from a completed transcript.

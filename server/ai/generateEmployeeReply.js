@@ -1,5 +1,69 @@
 import { GoogleGenAI } from "@google/genai";
 
+const defaultGeminiModels = [
+  "gemini-3.8-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.1-flash-lite",
+];
+const temporarilyUnavailableModels = new Map();
+const defaultRetryDelayMs = 60_000;
+
+function getConfiguredGeminiModels() {
+  const configuredModels = (process.env.GEMINI_MODELS || defaultGeminiModels.join(","))
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
+
+  return configuredModels.length > 0 ? configuredModels : defaultGeminiModels;
+}
+
+function getGeminiErrorBody(error) {
+  const message = String(error?.message ?? "");
+  const jsonStart = message.indexOf("{");
+
+  if (jsonStart === -1) return null;
+
+  try {
+    return JSON.parse(message.slice(jsonStart)).error;
+  } catch {
+    return null;
+  }
+}
+
+function isQuotaRateLimitError(error) {
+  const apiError = getGeminiErrorBody(error);
+
+  return (
+    (error?.status === 429 || apiError?.code === 429) &&
+    apiError?.status === "RESOURCE_EXHAUSTED"
+  );
+}
+
+function getRetryDelayMs(error) {
+  const retryInfo = getGeminiErrorBody(error)?.details?.find((detail) =>
+    String(detail?.["@type"]).includes("RetryInfo"),
+  );
+  const seconds = Number.parseFloat(retryInfo?.retryDelay);
+
+  return Number.isFinite(seconds) && seconds > 0
+    ? Math.ceil(seconds * 1000)
+    : defaultRetryDelayMs;
+}
+
+function isTemporarilyUnavailable(model, now = Date.now()) {
+  const availableAt = temporarilyUnavailableModels.get(model);
+
+  if (!availableAt) return false;
+
+  if (availableAt <= now) {
+    temporarilyUnavailableModels.delete(model);
+    return false;
+  }
+
+  return true;
+}
+
 function createMockReply(managerText) {
   const normalizedText = managerText.toLowerCase();
 
@@ -50,35 +114,54 @@ ${recentTurns}`;
 
 export async function generateEmployeeReply({ employeeRecord, transcript }) {
   const lastManagerTurn = [...transcript].reverse().find((turn) => turn.speaker === "manager");
+  const managerText = lastManagerTurn?.text ?? "";
 
   if (!process.env.GEMINI_API_KEY) {
     return {
       source: "local-practice-reply",
-      text: createMockReply(lastManagerTurn?.text ?? ""),
+      text: createMockReply(managerText),
     };
   }
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
-    contents: createPrompt({ employeeRecord, transcript }),
-    config: {
-      // Gemini counts internal thinking and the visible answer against this limit.
-      // A small limit can leave only the beginning of Rohit's reply for the user.
-      maxOutputTokens: 512,
-      // This is a straightforward role-play response, so low thinking keeps the
-      // exchange quick and leaves most of the token budget for spoken dialogue.
-      thinkingConfig: {
-        thinkingLevel: "low",
-      },
-      temperature: 0.5,
-    },
-  });
-  const text = response.text?.trim();
+  const prompt = createPrompt({ employeeRecord, transcript });
 
-  if (!text) {
-    throw new Error("Gemini returned an empty employee reply.");
+  for (const model of getConfiguredGeminiModels()) {
+    if (isTemporarilyUnavailable(model)) continue;
+
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          // Gemini counts internal thinking and the visible answer against this limit.
+          // A small limit can leave only the beginning of Rohit's reply for the user.
+          maxOutputTokens: 512,
+          // This is a straightforward role-play response, so low thinking keeps the
+          // exchange quick and leaves most of the token budget for spoken dialogue.
+          thinkingConfig: {
+            thinkingLevel: "low",
+          },
+          temperature: 0.5,
+        },
+      });
+      const text = response.text?.trim();
+
+      if (!text) {
+        throw new Error("Gemini returned an empty employee reply.");
+      }
+
+      return { source: "gemini", model, text };
+    } catch (error) {
+      if (!isQuotaRateLimitError(error)) throw error;
+
+      temporarilyUnavailableModels.set(model, Date.now() + getRetryDelayMs(error));
+    }
   }
 
-  return { source: "gemini", text };
+  return {
+    source: "local-practice-reply",
+    fallbackReason: "gemini-quota",
+    text: createMockReply(managerText),
+  };
 }
