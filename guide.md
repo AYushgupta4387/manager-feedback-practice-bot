@@ -243,6 +243,19 @@ It works immediately with the local practice provider. To use Gemini later, copy
 
 **What to learn:** The transcript is a useful source of evidence. A dependable first version can use small, transparent rules to point to actual wording before we decide whether AI-generated coaching adds enough value.
 
+### 14. Demo readiness and realistic fallback
+
+**Summary:** The prototype now has its demo materials, honest limitations, a first-sound measurement, and a more realistic local employee fallback.
+
+**What changed:**
+
+- Added a runbook, a short design write-up, and the required probe-results table.
+- Made the local employee respond defensively on the first manager turn instead of agreeing immediately.
+- Added an in-app first-sound measurement after a manager finishes a turn.
+- Added “Rohit says” to browser speech so the simulated employee remains clear without looking at the screen.
+
+**What to learn:** Completing a prototype is more than adding screens. A live demo needs clear setup instructions, known limitations, a way to observe important experience measures, and honest evidence about difficult cases.
+
 ## Next step
 
 Test difficult conversations and document the app's limits and tradeoffs.

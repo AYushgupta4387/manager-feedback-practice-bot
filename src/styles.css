@@ -476,6 +476,11 @@ button:disabled {
   margin-bottom: 0;
   color: #334e68;
 }
+.voice-latency {
+  margin: 7px 0 0;
+  color: #627d98;
+  font-size: 0.86rem;
+}
 .speech-actions {
   display: flex;
   flex: 0 0 auto;

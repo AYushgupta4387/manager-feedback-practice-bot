@@ -16,7 +16,7 @@ export function useSpeechSynthesis() {
   }, [isSupported]);
 
   const speak = useCallback(
-    (text) => {
+    (text, onStart) => {
       if (!isSupported) {
         setError("Text-to-speech is unavailable in this browser.");
         setStatus("unsupported");
@@ -26,10 +26,15 @@ export function useSpeechSynthesis() {
       window.speechSynthesis.cancel();
       setError("");
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      // The spoken label makes it clear that this is the simulated employee,
+      // even when the listener cannot see the transcript.
+      const utterance = new SpeechSynthesisUtterance(`Rohit says: ${text}`);
       utterance.lang = "en-IN";
       utterance.rate = 0.96;
-      utterance.onstart = () => setStatus("speaking");
+      utterance.onstart = () => {
+        setStatus("speaking");
+        onStart?.();
+      };
       utterance.onend = () => setStatus("idle");
       utterance.onerror = (event) => {
         if (event.error === "canceled" || event.error === "interrupted") {

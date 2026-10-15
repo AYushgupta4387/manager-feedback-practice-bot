@@ -64,8 +64,17 @@ function isTemporarilyUnavailable(model, now = Date.now()) {
   return true;
 }
 
-function createMockReply(managerText) {
+function createMockReply(transcript) {
+  const managerTurns = transcript.filter((turn) => turn.speaker === "manager");
+  const managerText = managerTurns.at(-1)?.text ?? "";
+  const managerTurnCount = managerTurns.length;
   const normalizedText = managerText.toLowerCase();
+
+  // The employee should not immediately agree after a single polished opening.
+  // This keeps the no-key rehearsal useful rather than making it a cooperative chatbot.
+  if (managerTurnCount === 1) {
+    return "I know I have been late, but the train service has been unreliable lately. I have been staying later to make up the time, so I did not think it was affecting the team this much.";
+  }
 
   if (normalizedText.includes("what could") || normalizedText.includes("how can")) {
     return "I could leave earlier for the station and send a message before stand-up if there is a delay. I can try that for the next two weeks.";
@@ -113,13 +122,10 @@ ${recentTurns}`;
 }
 
 export async function generateEmployeeReply({ employeeRecord, transcript }) {
-  const lastManagerTurn = [...transcript].reverse().find((turn) => turn.speaker === "manager");
-  const managerText = lastManagerTurn?.text ?? "";
-
   if (!process.env.GEMINI_API_KEY) {
     return {
       source: "local-practice-reply",
-      text: createMockReply(managerText),
+      text: createMockReply(transcript),
     };
   }
 
@@ -162,6 +168,6 @@ export async function generateEmployeeReply({ employeeRecord, transcript }) {
   return {
     source: "local-practice-reply",
     fallbackReason: "gemini-quota",
-    text: createMockReply(managerText),
+    text: createMockReply(transcript),
   };
 }

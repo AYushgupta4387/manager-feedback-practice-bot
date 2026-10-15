@@ -31,6 +31,7 @@ function App() {
   const [replyError, setReplyError] = useState("");
   const [replyFallbackReason, setReplyFallbackReason] = useState("");
   const [replySource, setReplySource] = useState("");
+  const [lastVoiceLatencyMs, setLastVoiceLatencyMs] = useState(null);
 
   const openRehearsal = () => {
     if (transcript.length === 0) {
@@ -57,9 +58,10 @@ function App() {
     setReplyError("");
     setReplyFallbackReason("");
     setReplySource("");
+    setLastVoiceLatencyMs(null);
   };
 
-  const requestRohitReply = async (conversationTranscript) => {
+  const requestRohitReply = async (conversationTranscript, managerFinishedAt) => {
     setReplyError("");
     setReplyFallbackReason("");
     setReplyStatus("thinking");
@@ -75,6 +77,7 @@ function App() {
           speakerLabel: `${employeeContext.name} · simulated employee`,
           text: reply.text,
           time: formatTurnTime(),
+          managerFinishedAt,
         },
       ]);
       setReplyFallbackReason(reply.fallbackReason || "");
@@ -87,6 +90,7 @@ function App() {
   };
 
   const addManagerSpeechTurn = (text) => {
+    const managerFinishedAt = performance.now();
     const managerTurn = {
       id: `manager-${Date.now()}`,
       speaker: "manager",
@@ -97,7 +101,7 @@ function App() {
     const nextTranscript = [...transcript, managerTurn];
 
     setTranscript(nextTranscript);
-    requestRohitReply(nextTranscript);
+    requestRohitReply(nextTranscript, managerFinishedAt);
   };
 
   const retryLastManagerMessage = () => {
@@ -108,7 +112,7 @@ function App() {
       return;
     }
 
-    requestRohitReply(transcript);
+    requestRohitReply(transcript, performance.now());
   };
 
   const markLatestEmployeeTurnInterrupted = () => {
@@ -175,6 +179,11 @@ function App() {
           onBackToContext={() => setActiveMode("context")}
           onInterruptEmployee={markLatestEmployeeTurnInterrupted}
           onManagerSpeechComplete={addManagerSpeechTurn}
+          onEmployeeSpeechStarted={(turn) => {
+            if (typeof turn.managerFinishedAt === "number") {
+              setLastVoiceLatencyMs(Math.round(performance.now() - turn.managerFinishedAt));
+            }
+          }}
           onOpenDebrief={() => setActiveMode("debrief")}
           onResetTranscript={resetTranscript}
           onRetryLastManagerMessage={retryLastManagerMessage}
@@ -182,6 +191,7 @@ function App() {
           replyFallbackReason={replyFallbackReason}
           replySource={replySource}
           replyStatus={replyStatus}
+          lastVoiceLatencyMs={lastVoiceLatencyMs}
           transcript={transcript}
         />
       )}
@@ -374,6 +384,7 @@ function RehearsalScreen({
   onBackToContext,
   onInterruptEmployee,
   onManagerSpeechComplete,
+  onEmployeeSpeechStarted,
   onOpenDebrief,
   onResetTranscript,
   onRetryLastManagerMessage,
@@ -381,6 +392,7 @@ function RehearsalScreen({
   replyFallbackReason,
   replySource,
   replyStatus,
+  lastVoiceLatencyMs,
   transcript,
 }) {
   const { error, isSupported, speak, status, stop } = useSpeechSynthesis();
@@ -415,8 +427,8 @@ function RehearsalScreen({
     }
 
     autoPlayedReplyIdRef.current = latestEmployeeTurn.id;
-    speak(latestEmployeeTurn.text);
-  }, [isSupported, latestEmployeeTurn, replyStatus, speak]);
+    speak(latestEmployeeTurn.text, () => onEmployeeSpeechStarted(latestEmployeeTurn));
+  }, [isSupported, latestEmployeeTurn, onEmployeeSpeechStarted, replyStatus, speak]);
 
   const interruptAndSpeak = () => {
     stop();
@@ -534,6 +546,9 @@ function RehearsalScreen({
                   ? "Ready to play a simulated employee reply."
                   : "Text-to-speech is unavailable in this browser.")}
           </p>
+          {lastVoiceLatencyMs !== null && (
+            <p className="voice-latency">Last first sound: {lastVoiceLatencyMs} ms after you finished your turn.</p>
+          )}
         </div>
         <div className="speech-actions">
           <button
